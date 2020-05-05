@@ -15,4 +15,5 @@ public class AddNewPayee {
         payBillsPage.txt_payeeDetails.sendKeys(payeeInfo.get("Payee details"));
         payBillsPage.btn_add.click();
     }
+
 }
