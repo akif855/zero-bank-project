@@ -1,0 +1,1520 @@
+Index: src/test/java/com/zerobank/step_definitions/NavigationSteps.java
+===================================================================
+--- src/test/java/com/zerobank/step_definitions/NavigationSteps.java	(revision 1a05be6dcc5391446941b6949e1c5707fed238ae)
++++ src/test/java/com/zerobank/step_definitions/NavigationSteps.java	(revision 1a05be6dcc5391446941b6949e1c5707fed238ae)
+@@ -1,18 +0,0 @@
+-package com.zerobank.step_definitions;
+-
+-import com.zerobank.pages.BasePage;
+-import io.cucumber.java.en.When;
+-
+-public class NavigationSteps {
+-    @When("user navigates to {string} page")
+-    public void user_navigates_to_page(String page) {
+-        BasePage basePage = new BasePage();
+-        basePage.navigateTo(page);
+-    }
+-
+-    @When("user switch to {string} account")
+-    public void user_Switch_To_Link(String account) {
+-        BasePage basePage = new BasePage();
+-        basePage.switchTo(account);
+-    }
+-}
+Index: src/test/resources/features/AccountActivityNavigation.feature
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/test/resources/features/AccountActivityNavigation.feature	(revision 1a05be6dcc5391446941b6949e1c5707fed238ae)
++++ src/test/resources/features/AccountActivityNavigation.feature	(date 1588650343578)
+@@ -7,27 +7,15 @@
+     And user enters "password" as "user_password" on "Login" page
+     And user clicks on "login" button on "Login" page
+ 
+-  Scenario: Savings account redirect
+-    When user switch to "Savings" account
+-    Then "Title" should contain "Zero - Account Activity" on "Account Activity" page
+-    And "Account drop down default option" should contain "Savings" on "Account Activity" page
+-
+-  Scenario: Brokerage account redirect
+-    When user switch to "Brokerage" account
+-    Then "Title" should contain "Zero - Account Activity" on "Account Activity" page
+-    And "Account drop down default option" should contain "Brokerage" on "Account Activity" page
+ 
+-  Scenario: Checking account redirect
+-    When user switch to "Checking" account
+-    Then "Title" should contain "Zero - Account Activity" on "Account Activity" page
+-    And "Account drop down default option" should contain "Checking" on "Account Activity" page
+-
+-  Scenario: Credit Card account redirect
+-    When user switch to "Credit Card" account
++  Scenario Outline: <link> account redirect
++    When user clicks on "<link>" link on "Account Summary" page
+     Then "Title" should contain "Zero - Account Activity" on "Account Activity" page
+-    And "Account drop down default option" should contain "Credit Card" on "Account Activity" page
+-
+-  Scenario: Loan account redirect
+-    When user switch to "Loan" account
+-    Then "Title" should contain "Zero - Account Activity" on "Account Activity" page
+-    And "Account drop down default option" should contain "Loan" on "Account Activity" page
+\ No newline at end of file
++    And Account drop down should have "<dropdown>" selected on "Account Activity" page
++    Examples:
++      | link        | dropdown    |
++      | Savings     | Savings     |
++      | Brokerage   | Brokerage   |
++      | Checking    | Checking    |
++      | Credit Card | Credit Card |
++      | Loan        | Loan        |
+\ No newline at end of file
+Index: src/test/java/com/zerobank/step_definitions/AccountSummarySteps.java
+===================================================================
+--- src/test/java/com/zerobank/step_definitions/AccountSummarySteps.java	(revision 1a05be6dcc5391446941b6949e1c5707fed238ae)
++++ src/test/java/com/zerobank/stepdefinitions/AccountSummarySteps.java	(date 1588649618435)
+@@ -1,13 +1,8 @@
+-package com.zerobank.step_definitions;
++package com.zerobank.stepdefinitions;
+ 
+-import com.zerobank.pages.AccountSummaryPage;
+ import com.zerobank.pages.BasePage;
+-import com.zerobank.pages.LoginPage;
+-import com.zerobank.utilities.BrowserUtils;
+-import com.zerobank.utilities.Driver;
+ import com.zerobank.utilities.PageObjects;
+ import io.cucumber.java.en.Then;
+-import org.junit.Assert;
+ 
+ import java.util.List;
+ 
+Index: src/test/java/com/zerobank/stepdefinitions/AddNewPayee.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/test/java/com/zerobank/stepdefinitions/AddNewPayee.java	(date 1588649618509)
++++ src/test/java/com/zerobank/stepdefinitions/AddNewPayee.java	(date 1588649618509)
+@@ -0,0 +1,18 @@
++package com.zerobank.stepdefinitions;
++
++import com.zerobank.pages.PayBillsPage;
++import io.cucumber.java.en.When;
++
++import java.util.Map;
++
++public class AddNewPayee {
++    @When("creates new payee using following information")
++    public void creates_new_payee_using_following_information(Map<String,String> payeeInfo) {
++        PayBillsPage payBillsPage = new PayBillsPage();
++        payBillsPage.txt_payeeName.sendKeys(payeeInfo.get("Payee Name"));
++        payBillsPage.txt_payeeAddress.sendKeys(payeeInfo.get("Payee Address"));
++        payBillsPage.txt_account.sendKeys(payeeInfo.get("Account"));
++        payBillsPage.txt_payeeDetails.sendKeys(payeeInfo.get("Payee details"));
++        payBillsPage.btn_add.click();
++    }
++}
+Index: src/test/java/com/zerobank/pages/AccountSummaryPage.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/test/java/com/zerobank/pages/AccountSummaryPage.java	(revision 1a05be6dcc5391446941b6949e1c5707fed238ae)
++++ src/test/java/com/zerobank/pages/AccountSummaryPage.java	(date 1588649842950)
+@@ -9,7 +9,7 @@
+ 
+ import java.util.List;
+ 
+-public class AccountSummaryPage extends BasePage {
++public class AccountSummaryPage extends BasePage{
+ 
+     @FindBy(tagName = "h2")
+     public List<WebElement> hdr_accountTypes;
+@@ -17,6 +17,20 @@
+     @FindBy(xpath = "(//table)[3]/thead/tr/th")
+     public List<WebElement> hdr_tableColumns;
+ 
++    @FindBy(linkText = "Savings")
++    public WebElement lnk_savings;
++
++    @FindBy(linkText = "Brokerage")
++    public WebElement lnk_brokerage;
++
++    @FindBy(linkText = "Checking")
++    public WebElement lnk_checking;
++
++    @FindBy(linkText = "Credit Card")
++    public WebElement lnk_creditCard;
++
++    @FindBy(linkText = "Loan")
++    public WebElement lnk_loan;
+ 
+ 
+ 
+@@ -49,6 +63,28 @@
+         }
+     }
+ 
+-
++    @Override
++    public void clickButton(String link){
++        link = link.toUpperCase();
++        switch (link){
++            case ConstantVariables.SAVINGS:
++                lnk_savings.click();
++                break;
++            case ConstantVariables.BROKERAGE:
++                lnk_brokerage.click();
++                break;
++            case ConstantVariables.CHECKING:
++                lnk_checking.click();
++                break;
++            case ConstantVariables.CREDIT_CARD:
++                lnk_creditCard.click();
++                break;
++            case ConstantVariables.LOAN:
++                lnk_loan.click();
++                break;
++            default:
++                Assert.fail("There is no a " + link + " in this switch statement");
++        }
++    }
+ 
+ }
+\ No newline at end of file
+Index: src/test/java/com/zerobank/pages/OnlineStatementsPage.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/test/java/com/zerobank/pages/OnlineStatementsPage.java	(date 1588649771626)
++++ src/test/java/com/zerobank/pages/OnlineStatementsPage.java	(date 1588649771626)
+@@ -0,0 +1,24 @@
++
++package com.zerobank.pages;
++
++import com.zerobank.utilities.Driver;
++import org.openqa.selenium.By;
++import org.openqa.selenium.WebElement;
++import org.openqa.selenium.support.FindBy;
++
++import java.util.List;
++
++public class OnlineStatementsPage extends BasePage{
++
++    @FindBy(xpath = "//ul[@class='nav nav-pills']/li")
++    public List<WebElement> listRecentStatements;
++
++
++    public List<WebElement> getListOfStatements(int year){
++        String xpath = "//div[@id='os_" + year + "']/table/tbody/tr/td[1]/a";
++        List<WebElement> listEl = Driver.getDriver().findElements(By.xpath(xpath));
++        return listEl;
++    }
++
++
++}
+Index: src/test/resources/features/AccountActivity.feature
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/test/resources/features/AccountActivity.feature	(revision 1a05be6dcc5391446941b6949e1c5707fed238ae)
++++ src/test/resources/features/AccountActivity.feature	(date 1588650390666)
+@@ -6,7 +6,7 @@
+     When user enters "username" as "user_username" on "Login" page
+     And user enters "password" as "user_password" on "Login" page
+     And user clicks on "login" button on "Login" page
+-    When user navigates to "Account Activity" page
++    When user navigates to "Account Activity" "page"
+ 
+   Scenario: Account Activity page should have the title Zero – Account activity.
+     Then "Title" should contain "Zero - Account Activity" on "Account Activity" page
+Index: src/test/resources/features/StatementsAndDocuments.feature
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/test/resources/features/StatementsAndDocuments.feature	(date 1588649962430)
++++ src/test/resources/features/StatementsAndDocuments.feature	(date 1588649962430)
+@@ -0,0 +1,33 @@
++@smoke @regression
++Feature: Statements and Documents details
++
++  Background:
++    Given user is on "Login" page
++    When user enters "username" as "user_username" on "Login" page
++    And user enters "password" as "user_password" on "Login" page
++    And user clicks on "login" button on "Login" page
++    When user navigates to "Online Statements" "page"
++
++
++  Scenario Outline: Recent statements per <year>
++    And the user selects the Recent Statements Year <year>
++    Then <count> statements should be displayed for that year
++    Examples:
++      | year | count |
++      | 2009 | 2     |
++      | 2010 | 2     |
++      | 2011 | 2     |
++      | 2012 | 1     |
++
++
++  Scenario Outline: Download statements <year>
++    And the user selects the Recent Statements Year <year>
++    And the user clicks on statement "<statement>"
++    Then the downloaded file name should contain "<name>"
++    And the file type should be ".pdf"
++    Examples:
++      | year | statement               | name     |
++      | 2009 | Statement 31/11/09(57K) | 31-11-09 |
++      | 2010 | Statement 01/12/10(57K) | 01-12-10 |
++      | 2011 | Statement 05/12/11(57K) | 05-12-11 |
++      | 2012 | Statement 01/10/12(57K) | 01-10-12 |
+\ No newline at end of file
+Index: src/test/java/com/zerobank/stepdefinitions/AccountActivityNavigationSteps.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/test/java/com/zerobank/stepdefinitions/AccountActivityNavigationSteps.java	(date 1588649618496)
++++ src/test/java/com/zerobank/stepdefinitions/AccountActivityNavigationSteps.java	(date 1588649618496)
+@@ -0,0 +1,13 @@
++package com.zerobank.stepdefinitions;
++
++import com.zerobank.pages.BasePage;
++import com.zerobank.utilities.PageObjects;
++import io.cucumber.java.en.Then;
++
++public class AccountActivityNavigationSteps {
++    @Then("Account drop down should have {string} selected on {string} page")
++    public void account_drop_down_should_have_selected_on_page(String expected, String page) {
++        BasePage pageName = PageObjects.getPageObjects(page);
++        pageName.validateAccountDropdown(expected);
++    }
++}
+Index: src/test/java/com/zerobank/stepdefinitions/StatementsAndDocumentsSteps.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/test/java/com/zerobank/stepdefinitions/StatementsAndDocumentsSteps.java	(date 1588650478247)
++++ src/test/java/com/zerobank/stepdefinitions/StatementsAndDocumentsSteps.java	(date 1588650478247)
+@@ -0,0 +1,87 @@
++package com.zerobank.stepdefinitions;
++
++import com.zerobank.pages.OnlineStatementsPage;
++import com.zerobank.utilities.BrowserUtils;
++import io.cucumber.java.en.Then;
++import io.cucumber.java.en.When;
++import org.junit.Assert;
++import org.openqa.selenium.WebElement;
++
++import java.io.File;
++import java.util.List;
++
++public class StatementsAndDocumentsSteps {
++    OnlineStatementsPage onlineStatementsPage;
++    int yearStatement;
++    File file;
++    File[] files;
++
++    @When("the user selects the Recent Statements Year {int}")
++    public void the_user_selects_the_Recent_Statements_Year(int year) {
++        onlineStatementsPage = new OnlineStatementsPage();
++        yearStatement = year;
++        for (WebElement each: onlineStatementsPage.listRecentStatements){
++            if (each.getText().equals(year+"")){
++                each.click();
++                break;
++            }
++        }
++    }
++
++    @Then("{int} statements should be displayed for that year")
++    public void statements_should_be_displayed_for_that_year(int statementCount) {
++        Assert.assertEquals(onlineStatementsPage.getListOfStatements(yearStatement).size(), statementCount);
++    }
++
++
++
++    @When("the user clicks on statement {string}")
++    public void the_user_clicks_on_statement(String nameOfStatement) {
++        List<WebElement> listOfStatements = onlineStatementsPage.getListOfStatements(yearStatement);
++        for (WebElement each: listOfStatements){
++            if (each.getText().equals(nameOfStatement)){
++                each.click();
++                BrowserUtils.wait(3);
++                break;
++            }
++        }
++    }
++
++    @Then("the downloaded file name should contain {string}")
++    public void the_downloaded_file_name_should_contain(String nameOfTheFile) {
++        try {
++            file = new File(System.getProperty("user.dir")+"/DownloadsUI");
++            files = file.listFiles();
++            boolean nameCheck = false;
++            for (File each:files){
++                if (each.getName().contains(nameOfTheFile)){
++                    System.out.println(each.getName());
++                    nameCheck = true;
++                    file = each;
++                    break;
++                }
++            }
++            Assert.assertTrue(nameCheck);
++        }finally {
++
++        }
++    }
++
++    @Then("the file type should be {string}")
++    public void the_file_type_should_be_pdf(String extension) {
++        try {
++            boolean extensionCheck = false;
++            for (File each:files){
++                if (each.getName().contains(extension)){
++                    System.out.println(each.getName());
++                    extensionCheck = true;
++                    file = each;
++                    break;
++                }
++            }
++            Assert.assertTrue(extensionCheck);
++        }finally {
++            file.delete();
++        }
++    }
++}
+Index: src/test/java/com/zerobank/stepdefinitions/FindTransactionsSteps.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/test/java/com/zerobank/stepdefinitions/FindTransactionsSteps.java	(date 1588649618488)
++++ src/test/java/com/zerobank/stepdefinitions/FindTransactionsSteps.java	(date 1588649618488)
+@@ -0,0 +1,104 @@
++package com.zerobank.stepdefinitions;
++
++import com.zerobank.pages.AccountActivityPage;
++import com.zerobank.pages.BasePage;
++import com.zerobank.utilities.BrowserUtils;
++import com.zerobank.utilities.ConstantVariables;
++import com.zerobank.utilities.PageObjects;
++import io.cucumber.java.en.Then;
++import io.cucumber.java.en.When;
++import org.junit.Assert;
++
++import static org.junit.Assert.assertFalse;
++import static org.junit.Assert.assertTrue;
++
++public class FindTransactionsSteps {
++    AccountActivityPage accountActivityPage;
++
++    @Then("{string} should only show transactions dates between {string} to {string} on {string} page")
++    public void should_only_show_transactions_dates_between_to_on_page(String element, String startDate, String endDate, String page) {
++        BasePage pageName = PageObjects.getPageObjects(page);
++        pageName.validateDateResults(element, startDate, endDate);
++    }
++
++    @Then("the results should be sorted by most recent date")
++    public void the_results_should_be_sorted_by_most_recent_date() {
++        accountActivityPage = new AccountActivityPage();
++        assertTrue(BrowserUtils.isSortedDescendingOrder(accountActivityPage.date_transactionDateList));
++
++
++    }
++
++    @Then("the results table should only not contain transactions date {string}")
++    public void the_results_table_should_only_not_contain_transactions_date(String date) {
++        accountActivityPage = new AccountActivityPage();
++        assertFalse(BrowserUtils.isListContainsValue(accountActivityPage.date_transactionDateList,date));
++    }
++
++    @Then("results table should only show descriptions containing {string}")
++    public void results_table_should_only_show_descriptions_containing(String value) {
++        accountActivityPage = new AccountActivityPage();
++        BrowserUtils.wait(2);
++        assertTrue(BrowserUtils.isListContainsValue(accountActivityPage.desc_transactionDescriptionList,value));
++    }
++
++    @Then("results table should not show descriptions containing {string}")
++    public void results_table_should_not_show_descriptions_containing(String value) {
++        accountActivityPage = new AccountActivityPage();
++        assertFalse(BrowserUtils.isListContainsValue(accountActivityPage.desc_transactionDescriptionList,value));
++    }
++
++
++    @Then("results table should show at least one result under {string}")
++    public void results_table_should_show_at_least_one_result_under(String value) {
++        accountActivityPage = new AccountActivityPage();
++        value = value.toUpperCase();
++        switch (value){
++            case ConstantVariables.DEPOSIT:
++                assertTrue(accountActivityPage.clmn_deposit.size()>0);
++                break;
++            case ConstantVariables.WITHDRAWAL:
++                assertTrue(accountActivityPage.clmn_withdrawal.size()>0);
++                break;
++
++            default:
++                Assert.fail("There is no such " + value + " in this switch statement");
++        }
++    }
++
++    @When("user selects type {string}")
++    public void user_selects_type(String value) {
++        accountActivityPage = new AccountActivityPage();
++        String checkValue = value.toUpperCase();
++        switch (checkValue){
++            case ConstantVariables.DEPOSIT:
++                accountActivityPage.getTransactionType().selectByVisibleText(value);
++                break;
++            case ConstantVariables.WITHDRAWAL:
++                accountActivityPage.getTransactionType().selectByVisibleText(value);
++                break;
++
++            default:
++                Assert.fail("There is no such " + value + " in this switch statement");
++        }
++    }
++
++    @Then("results table should show no result under {string}")
++    public void results_table_should_show_no_result_under(String value) {
++        accountActivityPage = new AccountActivityPage();
++        value = value.toUpperCase();
++        switch (value){
++            case ConstantVariables.DEPOSIT:
++                BrowserUtils.wait(2);
++                assertFalse(BrowserUtils.isListEmpty(accountActivityPage.clmn_deposit));
++                break;
++            case ConstantVariables.WITHDRAWAL:
++                BrowserUtils.wait(2);
++                assertFalse(BrowserUtils.isListEmpty(accountActivityPage.clmn_withdrawal));
++                break;
++
++            default:
++                Assert.fail("There is no such " + value + " in this switch statement");
++        }
++    }
++}
+Index: src/test/java/com/zerobank/step_definitions/Hooks.java
+===================================================================
+--- src/test/java/com/zerobank/step_definitions/Hooks.java	(revision 1a05be6dcc5391446941b6949e1c5707fed238ae)
++++ src/test/java/com/zerobank/stepdefinitions/Hooks.java	(date 1588649618463)
+@@ -1,4 +1,4 @@
+-package com.zerobank.step_definitions;
++package com.zerobank.stepdefinitions;
+ 
+ import com.zerobank.utilities.Driver;
+ import io.cucumber.java.*;
+Index: src/test/resources/features/PurchaseForeignCurrency.feature
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/test/resources/features/PurchaseForeignCurrency.feature	(date 1588650077721)
++++ src/test/resources/features/PurchaseForeignCurrency.feature	(date 1588650077721)
+@@ -0,0 +1,36 @@
++@smoke @regression
++Feature: Purchase Foreign Currency
++
++  Background:
++    Given user is on "Login" page
++    When user enters "username" as "user_username" on "Login" page
++    And user enters "password" as "user_password" on "Login" page
++    And user clicks on "login" button on "Login" page
++    When user navigates to "Pay Bills" "page"
++    And user accesses to "Purchase Foreign Currency" "tab"
++
++
++  Scenario: Available currencies
++    Then "Currency drop down" should contain the following information on "Pay Bills" page
++      | Australia (dollar)    |
++      | Canada (dollar)       |
++      | Switzerland (franc)   |
++      | China (yuan)          |
++      | Denmark (krone)       |
++      | Eurozone (euro)       |
++      | Great Britain (pound) |
++      | Japan (yen)           |
++      | Mexico (peso)         |
++      | Norway (krone)        |
++      | New Zealand (dollar)  |
++      | Singapore (dollar)    |
++
++
++  Scenario Outline: Error message for not selecting currency
++    When user tries to calculate cost without selecting a "<options>"
++    Then error message "Please, ensure that you have filled all the required fields with valid values." should be displayed
++
++    Examples:
++      | options  |
++      | currency |
++      | value    |
+\ No newline at end of file
+Index: src/test/java/com/zerobank/pages/AccountActivityPage.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/test/java/com/zerobank/pages/AccountActivityPage.java	(revision 1a05be6dcc5391446941b6949e1c5707fed238ae)
++++ src/test/java/com/zerobank/pages/AccountActivityPage.java	(date 1588649868657)
+@@ -22,6 +22,41 @@
+     @FindBy(xpath = "//table/thead/tr/th")
+     public List<WebElement> hdr_transactionTable;
+ 
++    @FindBy(xpath = "//button[@class='btn btn-primary']")
++    public WebElement btn_find;
++
++    @FindBy(id = "aa_fromDate")
++    public WebElement date_startDate;
++
++    @FindBy(id = "aa_toDate")
++    public WebElement date_endDate;
++
++    @FindBy(xpath = "//div[@id='filtered_transactions_for_account']/table/tbody/tr/td[1]")
++    public List<WebElement> date_transactionDateList;
++
++    @FindBy(xpath = "//div[@id='filtered_transactions_for_account']/table/tbody/tr/td[2]")
++    public List<WebElement> desc_transactionDescriptionList;
++
++    @FindBy(id = "aa_description")
++    public WebElement txt_description;
++
++    @FindBy(xpath = "//div[@id='filtered_transactions_for_account']/table/tbody/tr/td[3]")
++    public List<WebElement> clmn_deposit;
++
++    @FindBy(xpath = "//div[@id='filtered_transactions_for_account']/table/tbody/tr/td[4]")
++    public List<WebElement> clmn_withdrawal;
++
++    @FindBy(id = "aa_type")
++    public WebElement drpd_transactionType;
++
++    @FindBy(linkText = "Find Transactions")
++    public WebElement tab_findTransactions;
++
++    public Select getTransactionType(){
++        return new Select(drpd_transactionType);
++    }
++
++
+     @Override
+     public void validateResults(String element,String expected){
+         element = element.toUpperCase();
+@@ -52,4 +87,86 @@
+                 Assert.fail("There is no such " + element + " in this switch statement");
+         }
+     }
++
++    @Override
++    public void validateDateResults(String element, String startDate, String endDate){
++        element = element.toUpperCase();
++        switch (element){
++            case ConstantVariables.TRANSACTIONS_TABLE:
++                Assert.assertTrue(BrowserUtils.isDatesInBetweenStartAndEndDate(startDate,endDate,BrowserUtils.getElementsText(date_transactionDateList)));
++                break;
++            default:
++                Assert.fail("There is no such " + element + " in this if statement");
++        }
++    }
++
++    @Override
++    public void validateAccountDropdown(String expected){
++        String value = expected.toUpperCase();
++        switch (value){
++            case ConstantVariables.SAVINGS:
++                Assert.assertEquals(expected,getAccountTypes().getFirstSelectedOption().getText());
++                break;
++            case ConstantVariables.BROKERAGE:
++                Assert.assertEquals(expected,getAccountTypes().getFirstSelectedOption().getText());
++                break;
++            case ConstantVariables.CHECKING:
++                Assert.assertEquals(expected,getAccountTypes().getFirstSelectedOption().getText());
++                break;
++            case ConstantVariables.CREDIT_CARD:
++                Assert.assertEquals(expected,getAccountTypes().getFirstSelectedOption().getText());
++                break;
++            case ConstantVariables.LOAN:
++                Assert.assertEquals(expected,getAccountTypes().getFirstSelectedOption().getText());
++                break;
++            default:
++                Assert.fail("There is no such " + expected + " in this switch statement");
++        }
++    }
++
++    @Override
++    public void clickButton(String button){
++        button = button.toUpperCase();
++        switch (button){
++            case ConstantVariables.FIND:
++                btn_find.click();
++                date_startDate.clear();
++                date_endDate.clear();
++                txt_description.clear();
++                break;
++            default:
++                Assert.fail("There is no a " + button + " in this switch statement");
++        }
++    }
++
++    @Override
++    public void enterValue(String field, String value){
++        field = field.toUpperCase();
++        switch (field){
++            case ConstantVariables.START_DATE:
++                date_startDate.sendKeys(value);
++                break;
++            case ConstantVariables.END_DATE:
++                date_endDate.sendKeys(value);
++                break;
++            case ConstantVariables.DESCRIPTION:
++                BrowserUtils.wait(2);
++                txt_description.sendKeys(value);
++                break;
++            default:
++                Assert.fail("There is no such a " + field + " in this switch statement");
++        }
++    }
++
++    @Override
++    public void navigateToTab(String tabName){
++        tabName = tabName.toUpperCase();
++        switch (tabName){
++            case ConstantVariables.FIND_TRANSACTIONS:
++                tab_findTransactions.click();
++                break;
++            default:
++                Assert.fail("There is no such " + tabName + " in this switch statement");
++        }
++    }
+ }
+Index: src/test/resources/features/FindTransaction.feature
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/test/resources/features/FindTransaction.feature	(date 1588650225799)
++++ src/test/resources/features/FindTransaction.feature	(date 1588650225799)
+@@ -0,0 +1,57 @@
++@smoke @regression
++Feature: Find Transactions in Account Activity
++
++
++  Background:
++    Given user is on "Login" page
++    When user enters "username" as "user_username" on "Login" page
++    And user enters "password" as "user_password" on "Login" page
++    And user clicks on "login" button on "Login" page
++    And user navigates to "Account Activity" "page"
++    And user accesses to "Find Transactions" "tab"
++
++
++  Scenario: Search date range
++    When user enters "start date" as "2012-09-01" on "Account Activity" page
++    And user enters "end date" as "2012-09-06" on "Account Activity" page
++    And user clicks on "find" button on "Account Activity" page
++    Then "Transactions table" should only show transactions dates between "2012-09-01" to "2012-09-06" on "Account Activity" page
++    And the results should be sorted by most recent date
++    When user enters "start date" as "2012-09-02" on "Account Activity" page
++    And user enters "end date" as "2012-09-06" on "Account Activity" page
++    And user clicks on "find" button on "Account Activity" page
++    Then "Transactions table" should only show transactions dates between "2012-09-02" to "2012-09-06" on "Account Activity" page
++    And the results table should only not contain transactions date "2012-09-01"
++
++
++  Scenario: Search description
++    When user enters "description" as "ONLINE" on "Account Activity" page
++    And user clicks on "find" button on "Account Activity" page
++    Then results table should only show descriptions containing "ONLINE"
++    When user enters "description" as "OFFICE" on "Account Activity" page
++    And user clicks on "find" button on "Account Activity" page
++    Then results table should only show descriptions containing "OFFICE"
++    But results table should not show descriptions containing "ONLINE"
++
++
++  Scenario: Search description case insensitive
++    When user enters "description" as "ONLINE" on "Account Activity" page
++    And user clicks on "find" button on "Account Activity" page
++    Then results table should only show descriptions containing "ONLINE"
++    When user enters "description" as "online" on "Account Activity" page
++    And user clicks on "find" button on "Account Activity" page
++    Then results table should only show descriptions containing "ONLINE"
++
++
++  Scenario: Type
++    And user clicks on "find" button on "Account Activity" page
++    Then results table should show at least one result under "Deposit"
++    Then results table should show at least one result under "Withdrawal"
++    When user selects type "Deposit"
++    And user clicks on "find" button on "Account Activity" page
++    Then results table should show at least one result under "Deposit"
++    But results table should show no result under "Withdrawal"
++    When user selects type "Withdrawal"
++    And user clicks on "find" button on "Account Activity" page
++    Then results table should show at least one result under "Withdrawal"
++    But results table should show no result under "Deposit"
+\ No newline at end of file
+Index: src/test/resources/features/AddNewPayee.feature
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/test/resources/features/AddNewPayee.feature	(date 1588650292841)
++++ src/test/resources/features/AddNewPayee.feature	(date 1588650292841)
+@@ -0,0 +1,19 @@
++@smoke @regression
++Feature: Add new payee under pay bills
++
++  Background:
++    Given user is on "Login" page
++    When user enters "username" as "user_username" on "Login" page
++    And user enters "password" as "user_password" on "Login" page
++    And user clicks on "login" button on "Login" page
++    And user navigates to "Pay Bills" "page"
++    And user accesses to "Add New Payee" "tab"
++
++
++  Scenario: Add a new payee
++    And creates new payee using following information
++      | Payee Name    | The Law Offices of Hyde, Price & Scharks |
++      | Payee Address | 100 Same st, Anytown, USA, 10001         |
++      | Account       | Checking                                 |
++      | Payee details | XYZ account                              |
++    Then "Add new payee message" should contain "The new payee The Law Offices of Hyde, Price & Scharks was successfully created." on "Pay Bills" page
+\ No newline at end of file
+Index: src/test/java/com/zerobank/stepdefinitions/PurchaseForeignCurrencySteps.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/test/java/com/zerobank/stepdefinitions/PurchaseForeignCurrencySteps.java	(date 1588650651474)
++++ src/test/java/com/zerobank/stepdefinitions/PurchaseForeignCurrencySteps.java	(date 1588650651474)
+@@ -0,0 +1,48 @@
++
++package com.zerobank.stepdefinitions;
++
++import com.zerobank.pages.PayBillsPage;
++import com.zerobank.utilities.ConstantVariables;
++import com.zerobank.utilities.Driver;
++import io.cucumber.java.en.Then;
++import io.cucumber.java.en.When;
++import org.junit.Assert;
++import org.openqa.selenium.Alert;
++
++import java.util.Random;
++
++public class PurchaseForeignCurrencySteps {
++    PayBillsPage payBillsPage;
++    Alert alert;
++
++    @When("user tries to calculate cost without selecting/entering a {string}")
++    public void user_tries_to_calculate_cost_without_selecting_a(String value) {
++        String checkValue = value.toUpperCase();
++        payBillsPage = new PayBillsPage();
++
++        switch (checkValue){
++            case ConstantVariables.CURRENCY:
++                payBillsPage.getCurrency().selectByIndex(new Random().nextInt(payBillsPage.getCurrency().getOptions().size()));
++                break;
++
++            case ConstantVariables.VALUE:
++                payBillsPage.txt_purchaseForeignCurrencyAmount.sendKeys(new Random().nextDouble()+"");
++                break;
++
++            default:
++                Assert.fail("There is no such " + value + " in this switch statement");
++        }
++    }
++
++    @Then("error message {string} should be displayed")
++    public void error_message_should_be_displayed(String expectedMessage) {
++        try {
++            alert = Driver.getDriver().switchTo().alert();
++            Assert.assertEquals(expectedMessage, alert.getText());
++            alert.accept();
++        }catch (Exception e){
++            e.printStackTrace();
++        }
++
++    }
++}
+Index: src/test/java/com/zerobank/runners/CukesRunerFailedTests.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/test/java/com/zerobank/runners/CukesRunerFailedTests.java	(revision 1a05be6dcc5391446941b6949e1c5707fed238ae)
++++ src/test/java/com/zerobank/runners/CukesRunerFailedTests.java	(date 1588649618474)
+@@ -6,7 +6,7 @@
+ 
+ @RunWith(Cucumber.class)
+ @CucumberOptions(
+-        glue = "com/zerobank/step_definitions",
++        glue = "com/zerobank/stepdefinitions",
+         features = "target/rerun.txt"
+ )
+ 
+Index: src/test/java/com/zerobank/pages/PayBillsPage.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/test/java/com/zerobank/pages/PayBillsPage.java	(revision 1a05be6dcc5391446941b6949e1c5707fed238ae)
++++ src/test/java/com/zerobank/pages/PayBillsPage.java	(date 1588649714114)
+@@ -1,5 +1,7 @@
++
+ package com.zerobank.pages;
+ 
++import com.zerobank.utilities.BrowserUtils;
+ import com.zerobank.utilities.ConstantVariables;
+ import com.zerobank.utilities.Driver;
+ import org.junit.Assert;
+@@ -7,7 +9,9 @@
+ import org.openqa.selenium.support.FindBy;
+ import org.openqa.selenium.support.ui.Select;
+ 
+-public class PayBillsPage extends BasePage {
++import java.util.List;
++
++public class PayBillsPage extends BasePage{
+ 
+     @FindBy(id = "sp_payee")
+     public WebElement drpd_payee;
+@@ -35,8 +39,39 @@
+     @FindBy(xpath = "//div[@id='alert_content']/span")
+     public WebElement msg_successMessage;
+ 
+-    @FindBy(xpath = "")
+-    public WebElement msg_emptyFieldMessage;
++    @FindBy(linkText = "Add New Payee")
++    public WebElement tab_addNewPayee;
++
++    @FindBy(linkText = "Purchase Foreign Currency")
++    public WebElement tab_purchaseForeignCurrency;
++
++    @FindBy(xpath = "//div[@id='alert_content']")
++    public WebElement msg_addNewPayee;
++
++    @FindBy(id = "np_new_payee_name")
++    public WebElement txt_payeeName;
++
++    @FindBy(id = "np_new_payee_address")
++    public WebElement txt_payeeAddress;
++
++    @FindBy(id = "np_new_payee_account")
++    public WebElement txt_account;
++
++    @FindBy(id = "np_new_payee_details")
++    public WebElement txt_payeeDetails;
++
++    @FindBy(id = "add_new_payee")
++    public WebElement btn_add;
++
++    @FindBy(id = "pc_currency")
++    public WebElement drpd_currency;
++
++    @FindBy(id = "pc_amount")
++    public WebElement txt_purchaseForeignCurrencyAmount;
++
++    public Select getCurrency(){
++        return new Select(drpd_currency);
++    }
+ 
+ 
+     @Override
+@@ -49,11 +84,29 @@
+             case ConstantVariables.MESSAGE:
+                 Assert.assertEquals(expected,msg_successMessage.getText());
+                 break;
+-            case ConstantVariables.EMPTY_FIELD_MESSAGE:
+-                Assert.assertEquals(expected,msg_emptyFieldMessage.getText());
++            case ConstantVariables.DATE_EMPTY_FIELD_MESSAGE:
++                Assert.assertEquals(expected,txt_date.getAttribute("validationMessage"));
++                break;
++            case ConstantVariables.AMOUNT_EMPTY_FIELD_MESSAGE:
++                Assert.assertEquals(expected,txt_amount.getAttribute("validationMessage"));
+                 break;
+             case ConstantVariables.AFTER_PAYMENT_MESSAGE:
+                 Assert.assertFalse(expected.equals(msg_successMessage.getText()));
++                break;
++            case ConstantVariables.ADD_NEW_PAYEE_MESSAGE:
++                Assert.assertEquals(expected,msg_addNewPayee.getText());
++                break;
++            default:
++                Assert.fail("There is no such " + element + " in this switch statement");
++        }
++    }
++
++    @Override
++    public void validateResultsList(String element, List<String> expectedList){
++        element = element.toUpperCase();
++        switch (element){
++            case ConstantVariables.CURRENCY_DROP_DOWN:
++                Assert.assertTrue(BrowserUtils.isListContainsList(expectedList,getCurrency().getOptions()));
+                 break;
+             default:
+                 Assert.fail("There is no such " + element + " in this switch statement");
+@@ -93,4 +146,19 @@
+         }
+     }
+ 
++    @Override
++    public void navigateToTab(String tabName){
++        tabName = tabName.toUpperCase();
++        switch (tabName){
++            case ConstantVariables.ADD_NEW_PAYEE:
++                tab_addNewPayee.click();
++                break;
++            case ConstantVariables.PURCHASE_FOREIGN_CURRENCY:
++                tab_purchaseForeignCurrency.click();
++                break;
++            default:
++                Assert.fail("There is no such " + tabName + " in this switch statement");
++        }
++    }
++
+ }
+Index: src/test/java/com/zerobank/stepdefinitions/NavigationSteps.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/test/java/com/zerobank/stepdefinitions/NavigationSteps.java	(date 1588649618422)
++++ src/test/java/com/zerobank/stepdefinitions/NavigationSteps.java	(date 1588649618422)
+@@ -0,0 +1,24 @@
++package com.zerobank.stepdefinitions;
++
++import com.zerobank.pages.BasePage;
++import com.zerobank.utilities.ConstantVariables;
++import com.zerobank.utilities.Driver;
++import com.zerobank.utilities.PageObjects;
++import io.cucumber.java.en.When;
++
++public class NavigationSteps {
++    @When("user navigates/accesses to {string} {string}")
++    public void user_navigates_to_page(String page_or_tab_name,String page_or_tab) {
++        String checkIfPageOrTab = page_or_tab.toUpperCase();
++        switch (checkIfPageOrTab){
++            case ConstantVariables.PAGE:
++                BasePage basePage = new BasePage();
++                basePage.navigateTo(page_or_tab_name);
++                break;
++            case ConstantVariables.TAB:
++                BasePage pageName = PageObjects.getPageObjects(Driver.getDriver().getTitle().split("-")[1].trim());
++                pageName.navigateToTab(page_or_tab_name);
++        }
++
++    }
++}
+Index: src/test/resources/features/PayBills.feature
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/test/resources/features/PayBills.feature	(revision 1a05be6dcc5391446941b6949e1c5707fed238ae)
++++ src/test/resources/features/PayBills.feature	(date 1588650106320)
+@@ -1,3 +1,5 @@
++
++@smoke @regression
+ Feature: Pay bills functionality
+ 
+   Background:
+@@ -5,7 +7,7 @@
+     When user enters "username" as "user_username" on "Login" page
+     And user enters "password" as "user_password" on "Login" page
+     And user clicks on "login" button on "Login" page
+-    When user navigates to "Pay Bills" page
++    When user navigates to "Pay Bills" "page"
+ 
+ 
+   Scenario: Pay Bills page should have the title Zero – Pay Bills.
+@@ -22,7 +24,6 @@
+     Then "Message" should contain "The payment was successfully submitted." on "Pay Bills" page
+ 
+ 
+-
+   Scenario Outline: When user tries to make a payment without entering the amount or date,
+   Please fill out this field. message should be displayed.
+     When user enters "payee" as "Bank of America" on "Pay Bills" page
+@@ -30,12 +31,11 @@
+     And user enters "amount" as "<amount>" on "Pay Bills" page
+     And user enters "date" as "<date>" on "Pay Bills" page
+     And user clicks on "pay" button on "Pay Bills" page
+-    Then "Empty field message" should contain "Please fill out this field." on "Pay Bills" page
++    Then "<message>" should contain "Please fill out this field." on "Pay Bills" page
+     Examples:
+-      | amount | date       |
+-      |        | 05/01/2020 |
+-      | 10     |            |
+-
++      | amount | date       | message                    |
++      |        | 05/01/2020 | Amount empty field message |
++      | 10     |            | Date empty field message   |
+ 
+ 
+   Scenario Outline: Amount field should not accept alphabetical or special characters.
+@@ -50,11 +50,11 @@
+       | dd     |
+       | /      |
+ 
+-  @wip
++
+   Scenario: Date field should not accept alphabetical characters.
+     When user enters "payee" as "Bank of America" on "Pay Bills" page
+     And user enters "account" as "Checking" on "Pay Bills" page
+     And user enters "amount" as "15" on "Pay Bills" page
+     And user enters "date" as "dd" on "Pay Bills" page
+     And user clicks on "pay" button on "Pay Bills" page
+-    Then "Empty field message" should contain "Please fill out this field." on "Pay Bills" page
+\ No newline at end of file
++    Then "Date empty field message" should contain "Please fill out this field." on "Pay Bills" page
+\ No newline at end of file
+Index: src/test/java/com/zerobank/utilities/ConstantVariables.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/test/java/com/zerobank/utilities/ConstantVariables.java	(revision 1a05be6dcc5391446941b6949e1c5707fed238ae)
++++ src/test/java/com/zerobank/utilities/ConstantVariables.java	(date 1588648529241)
+@@ -2,10 +2,13 @@
+ 
+ public class ConstantVariables {
+ 
++    public static final String PAGE = "PAGE";
++    public static final String TAB = "TAB";
+     public static final String LOGIN = "LOGIN";
+     public static final String ACCOUNT_SUMMARY = "ACCOUNT SUMMARY";
+     public static final String ACCOUNT_ACTIVITY = "ACCOUNT ACTIVITY";
+     public static final String PAY_BILLS = "PAY BILLS";
++    public static final String ONLINE_STATEMENTS = "ONLINE STATEMENTS";
+     public static final String BASE = "BASE";
+     public static final String USERNAME = "USERNAME";
+     public static final String PASSWORD = "PASSWORD";
+@@ -22,12 +25,29 @@
+     public static final String DATE = "DATE";
+     public static final String PAY = "PAY";
+     public static final String MESSAGE = "MESSAGE";
+-    public static final String EMPTY_FIELD_MESSAGE = "EMPTY FIELD MESSAGE";
++    public static final String AMOUNT_EMPTY_FIELD_MESSAGE = "AMOUNT EMPTY FIELD MESSAGE";
++    public static final String DATE_EMPTY_FIELD_MESSAGE = "DATE EMPTY FIELD MESSAGE";
+     public static final String AFTER_PAYMENT_MESSAGE = "AFTER PAYMENT MESSAGE";
++    public static final String ADD_NEW_PAYEE_MESSAGE = "ADD NEW PAYEE MESSAGE";
++    public static final String PURCHASE_FOREIGN_CURRENCY = "PURCHASE FOREIGN CURRENCY";
++    public static final String CURRENCY_DROP_DOWN = "CURRENCY DROP DOWN";
++    public static final String CURRENCY = "CURRENCY";
++    public static final String VALUE = "VALUE";
+     public static final String SAVINGS = "SAVINGS";
+     public static final String BROKERAGE = "BROKERAGE";
+     public static final String CHECKING = "CHECKING";
+     public static final String CREDIT_CARD = "CREDIT CARD";
+     public static final String LOAN = "LOAN";
++    public static final String FIND_TRANSACTIONS = "FIND TRANSACTIONS";
++    public static final String FIND = "FIND";
++    public static final String START_DATE = "START DATE";
++    public static final String END_DATE = "END DATE";
++    public static final String TRANSACTIONS_TABLE = "TRANSACTIONS TABLE";
++    public static final String DESCRIPTION = "DESCRIPTION";
++    public static final String DEPOSIT = "DEPOSIT";
++    public static final String WITHDRAWAL = "WITHDRAWAL";
++    public static final String ADD_NEW_PAYEE = "ADD NEW PAYEE";
++
++
+ 
+ }
+Index: src/test/java/com/zerobank/utilities/BrowserUtils.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/test/java/com/zerobank/utilities/BrowserUtils.java	(revision 1a05be6dcc5391446941b6949e1c5707fed238ae)
++++ src/test/java/com/zerobank/utilities/BrowserUtils.java	(date 1588648698094)
+@@ -15,14 +15,13 @@
+ import java.io.IOException;
+ import java.text.SimpleDateFormat;
+ import java.time.Duration;
++import java.time.LocalDate;
+ import java.util.*;
+ 
+ import static org.junit.Assert.assertTrue;
+ 
+ 
+ public class BrowserUtils {
+-
+-
+     /**
+      * Pause test for some time
+      *
+@@ -216,6 +215,54 @@
+         return difference;
+     }
+ 
++    public static boolean isDatesInBetweenStartAndEndDate(String startDate, String endDate, List<String> dateList){
++        List<LocalDate> localDateList = convertListToDate(dateList);
++        int startYear = Integer.parseInt(startDate.split("-")[0]);
++        int startMonth = Integer.parseInt(startDate.split("-")[1]);
++        int startDay = Integer.parseInt(startDate.split("-")[2]);
++
++        int endYear = Integer.parseInt(endDate.split("-")[0]);
++        int endMonth = Integer.parseInt(endDate.split("-")[1]);
++        int endDay = Integer.parseInt(endDate.split("-")[2]);
++
++        LocalDate startDateLocal = LocalDate.of(startYear,startMonth,startDay);
++        LocalDate endDateLocal = LocalDate.of(endYear,endMonth,endDay);
++
++        boolean checkDates = true;
++
++        for (int i = 0; i < dateList.size(); i++) {
++            LocalDate dateFromList = localDateList.get(i);
++            boolean isAfterStartDateOrEqual = dateFromList.isAfter(startDateLocal) || dateFromList.isEqual(startDateLocal);
++            boolean isBeforeEndDateOrEqual = dateFromList.isBefore(endDateLocal) || dateFromList.isEqual(endDateLocal);
++            if(!(isAfterStartDateOrEqual && isBeforeEndDateOrEqual)){
++                System.out.println("date from list " + dateList.get(i));
++                System.out.println("startDateLocal = " + startDateLocal);
++
++                System.out.println("endDateLocal = " + endDateLocal);
++                System.out.println("!endDateLocal.isAfter(dateList.get(i)) = " + !endDateLocal.isAfter(localDateList.get(i)));
++                checkDates = false;
++                break;
++            }
++        }
++
++        return checkDates;
++    }
++
++    public static List<LocalDate> convertListToDate(List<String> list){
++        List<LocalDate> dateList = new ArrayList<>();
++
++        for (int i = 0; i < list.size(); i++) {
++            int year = Integer.parseInt(list.get(i).split("-")[0]);
++            int month = Integer.parseInt(list.get(i).split("-")[1]);
++            int day = Integer.parseInt(list.get(i).split("-")[2]);
++
++            dateList.add(LocalDate.of(year,month,day));
++        }
++
++        return dateList;
++    }
++
++
+     public static boolean isSortedAscendingOrder(List<WebElement> list){
+         boolean isSorted = false;
+         List<String> listText = new ArrayList<>();
+@@ -224,7 +271,6 @@
+                 listText.add(element.getAttribute("textContent"));
+             }
+         }
+-        //List<String> listText = getElementsText(list);
+         List<String> listTextLowercase = new ArrayList<>();
+ 
+         for (int i = 0; i < listText.size(); i++) {
+@@ -249,7 +295,6 @@
+                 listText.add(element.getAttribute("textContent"));
+             }
+         }
+-        //List<String> listText = getElementsText(list);
+         List<String> listTextLowercase = new ArrayList<>();
+ 
+         for (int i = 0; i < listText.size(); i++) {
+@@ -265,6 +310,51 @@
+         return isSorted;
+     }
+ 
++    public static boolean isListContainsValue(List<WebElement> list, String value){
++        boolean isContins = true;
++        if (list.size()<1){
++            return false;
++        }
++        List<String> txtList = getElementsText(list);
++        for (String each : txtList){
++            System.out.println(each + "  " + value);
++            if (!each.contains(value)){
++                isContins = false;
++                break;
++            }
++        }
++        return isContins;
++    }
++
++    public static boolean isListEmpty(List<WebElement> list){
++        boolean isEmpty = false;
++        int sum = 0;
++
++        List<String> txt_list = getElementsText(list);
++        for(String each : txt_list){
++            sum += each.length();
++        }
++        isEmpty = sum > 0;
++
++        return isEmpty;
++    }
++
++
++    public static boolean isListContainsList(List<String> listCheck, List<WebElement> listContains){
++        List<String> listContainsTxt = getElementsText(listContains);
++        boolean isContains = false;
++        int count = 0;
++        for (int i = 0; i < listCheck.size(); i++) {
++            for (int j = 0; j < listContainsTxt.size(); j++) {
++                if (listCheck.get(i).contains(listContainsTxt.get(j))){
++                    count++;
++                }
++            }
++        }
++        isContains = count >= listCheck.size();
++
++        return isContains;
++    }
+ 
+ //    /**
+ //     * @param name screenshot name
+Index: src/test/java/com/zerobank/runners/CukesRunner.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/test/java/com/zerobank/runners/CukesRunner.java	(revision 1a05be6dcc5391446941b6949e1c5707fed238ae)
++++ src/test/java/com/zerobank/runners/CukesRunner.java	(date 1588651592799)
+@@ -14,9 +14,9 @@
+         },
+ 
+         features = "src/test/resources/features",
+-        glue = "com/zerobank/step_definitions",
++        glue = "com/zerobank/stepdefinitions",
+         dryRun = false,
+-        tags = "@db"
++        tags = "@wip"
+ 
+ )
+ public class CukesRunner {
+Index: src/test/java/com/zerobank/utilities/CommonMethods.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/test/java/com/zerobank/utilities/CommonMethods.java	(revision 1a05be6dcc5391446941b6949e1c5707fed238ae)
++++ src/test/java/com/zerobank/utilities/CommonMethods.java	(date 1588648397977)
+@@ -8,5 +8,8 @@
+     public default void clickButton(String button){}
+     public default void validateResults(String element,String expected){}
+     public default void validateResultsList(String element, List<String> expectedList){}
++    public default void validateAccountDropdown(String expected){}
++    public default void validateDateResults(String element, String startDate, String endDate){}
++    public default void navigateToTab(String tabName){}
+ 
+ }
+Index: src/test/java/com/zerobank/utilities/Driver.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/test/java/com/zerobank/utilities/Driver.java	(revision 1a05be6dcc5391446941b6949e1c5707fed238ae)
++++ src/test/java/com/zerobank/utilities/Driver.java	(date 1588648484896)
+@@ -12,6 +12,9 @@
+ import org.openqa.selenium.safari.SafariDriver;
+ 
+ 
++import java.util.HashMap;
++import java.util.HashSet;
++
+ public class Driver {
+     private Driver(){}
+ 
+@@ -23,7 +26,10 @@
+             switch (browser.toLowerCase()){
+                 case "chrome":
+                     WebDriverManager.chromedriver().setup();
+-                    driverPool.set(new ChromeDriver());
++                    HashMap<String,Object> chromePrefs = new HashMap<>();
++                    chromePrefs.put("profile.default_content_settings.popups",0);
++                    chromePrefs.put("download.default_directory",System.getProperty("user.dir") + "/DownloadsUI");
++                    driverPool.set(new ChromeDriver(new ChromeOptions().setExperimentalOption("prefs",chromePrefs)));
+                     break;
+                 case "chrome-headless":
+                     WebDriverManager.chromedriver().setup();
+Index: src/test/resources/features/Login.feature
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/test/resources/features/Login.feature	(revision 1a05be6dcc5391446941b6949e1c5707fed238ae)
++++ src/test/resources/features/Login.feature	(date 1588650176357)
+@@ -1,4 +1,4 @@
+-@smoke @regression
++@smoke @regression @wip
+ Feature: Login functionality
+ 
+   Background:
+@@ -6,44 +6,22 @@
+ 
+ 
+   Scenario: Only authorized users should be able to login to the application.
+-
+     When user enters "username" as "user_username" on "Login" page
+     And user enters "password" as "user_password" on "Login" page
+     And user clicks on "Login" button on "Login" page
+-    Then "Title" should contain "Zero - Account Summary" on "Account Summary" page
+-
+-
+-  Scenario: Users with wrong username and valid password should not be able to login.
+-
+-    When user enters "username" as "Nijat" on "Login" page
+-    And user enters "password" as "user_password" on "Login" page
+-    And user clicks on "Login" button on "Login" page
+-    Then "ErrorMessage" should contain "Login and/or password are wrong." on "Login" page
++    Then "Title" should contain "Zero - Account Summary" on "Account summary" page
+ 
+-  Scenario: Users with valid username and wrong password should not be able to login.
+ 
+-    When user enters "username" as "user_username" on "Login" page
+-    And user enters "password" as "Nassif" on "Login" page
++  Scenario Outline: Users with invalid or blank (username or password) should not be able to login.
++    When user enters "username" as "<username>" on "Login" page
++    And user enters "password" as "<password>" on "Login" page
+     And user clicks on "Login" button on "Login" page
+     Then "ErrorMessage" should contain "Login and/or password are wrong." on "Login" page
+ 
+-  Scenario: Users with blank username and valid password should not be able to login.
+-
+-    When user enters "username" as "" on "Login" page
+-    And user enters "password" as "user_password" on "Login" page
+-    And user clicks on "Login" button on "Login" page
+-    Then "ErrorMessage" should contain "Login and/or password are wrong." on "Login" page
+-
+-  Scenario: Users with valid username and blank password should not be able to login.
+-
+-    When user enters "username" as "user_username" on "Login" page
+-    And user enters "password" as "" on "Login" page
+-    And user clicks on "Login" button on "Login" page
+-    Then "ErrorMessage" should contain "Login and/or password are wrong." on "Login" page
+-
+-  Scenario: Users with blank username and blank password should not be able to login.
+-
+-    When user enters "username" as "" on "Login" page
+-    And user enters "password" as "" on "Login" page
+-    And user clicks on "Login" button on "Login" page
+-    Then "ErrorMessage" should contain "Login and/or password are wrong." on "Login" page
+\ No newline at end of file
++    Examples:
++      | username      | password      |
++      | Akif          | user_password |
++      | user_username | Aihuseyn      |
++      |               | user_password |
++      | user_username |               |
++      |               |               |
+\ No newline at end of file
+Index: src/test/java/com/zerobank/step_definitions/LoginFunctionalitySteps.java
+===================================================================
+--- src/test/java/com/zerobank/step_definitions/LoginFunctionalitySteps.java	(revision 1a05be6dcc5391446941b6949e1c5707fed238ae)
++++ src/test/java/com/zerobank/stepdefinitions/LoginFunctionalitySteps.java	(date 1588649618503)
+@@ -1,16 +1,12 @@
+-package com.zerobank.step_definitions;
++package com.zerobank.stepdefinitions;
+ 
+ import com.zerobank.pages.BasePage;
+-import com.zerobank.pages.LoginPage;
+ import com.zerobank.utilities.ConfigurationReader;
+ import com.zerobank.utilities.Driver;
+ import com.zerobank.utilities.PageObjects;
+ import io.cucumber.java.en.Given;
+ import io.cucumber.java.en.Then;
+ import io.cucumber.java.en.When;
+-import org.junit.Assert;
+-import org.openqa.selenium.support.ui.ExpectedConditions;
+-import org.openqa.selenium.support.ui.WebDriverWait;
+ 
+ public class LoginFunctionalitySteps {
+     @Then("{string} should/shouldn't contain {string} on {string} page")
+@@ -37,7 +33,7 @@
+         Driver.getDriver().get(ConfigurationReader.getProperty("url"));
+     }
+ 
+-    @When("user clicks on {string} button on {string} page")
++    @When("user clicks on {string} button/link on {string} page")
+     public void user_clicks_on_button_on_page(String button, String page) {
+         BasePage pageName = PageObjects.getPageObjects(page);
+         pageName.clickButton(button);
+Index: src/test/java/com/zerobank/pages/BasePage.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- src/test/java/com/zerobank/pages/BasePage.java	(revision 1a05be6dcc5391446941b6949e1c5707fed238ae)
++++ src/test/java/com/zerobank/pages/BasePage.java	(date 1588649812320)
+@@ -4,13 +4,10 @@
+ import com.zerobank.utilities.ConstantVariables;
+ import com.zerobank.utilities.Driver;
+ import org.junit.Assert;
+-import org.openqa.selenium.By;
+ import org.openqa.selenium.WebElement;
+ import org.openqa.selenium.support.FindBy;
+ import org.openqa.selenium.support.PageFactory;
+ 
+-import java.util.List;
+-
+ public class BasePage implements CommonMethods {
+     public BasePage(){
+         PageFactory.initElements(Driver.getDriver(),this);
+@@ -22,21 +19,9 @@
+     @FindBy(xpath = "//div[@class='span12']/div/ul/li/a[contains(text(),'Pay Bills')]")
+     public WebElement tab_payBills;
+ 
+-
+-    @FindBy(xpath = "//tr[1]/td[1]/a[contains(text(),'Savings')]")
+-    public WebElement txt_savings;
+-
+-    @FindBy(xpath = "//tr[1]/td[1]/a[contains(text(),'Brokerage')]")
+-    public WebElement txt_brokerage;
+-
+-    @FindBy(xpath = "//tr[1]/td[1]/a[contains(text(),'Checking')]")
+-    public WebElement txt_checking;
++    @FindBy(xpath = "//div[@class='span12']/div/ul/li/a[contains(text(),'Online Statements')]")
++    public WebElement tab_onlineStatements;
+ 
+-    @FindBy(xpath = "//tr[2]/td[1]/a[contains(text(),'Credit Card')]")
+-    public WebElement txt_creditCard;
+-
+-    @FindBy(xpath = "//tr[1]/td[1]/a[contains(text(),'Loan')]")
+-    public WebElement txt_loan;
+ 
+ 
+ 
+@@ -48,33 +33,13 @@
+                 break;
+             case ConstantVariables.PAY_BILLS:
+                 tab_payBills.click();
++                break;
++            case ConstantVariables.ONLINE_STATEMENTS:
++                tab_onlineStatements.click();
+                 break;
+             default:
+                 Assert.fail("There is no such " + page + " in this switch statement");
+         }
+     }
+ 
+-    public void switchTo(String types){
+-        types = types.toUpperCase();
+-        switch (types){
+-            case ConstantVariables.SAVINGS:
+-                txt_savings.click();
+-                break;
+-            case ConstantVariables.BROKERAGE:
+-                txt_brokerage.click();
+-                break;
+-            case ConstantVariables.CHECKING:
+-                txt_checking.click();
+-                break;
+-            case ConstantVariables.CREDIT_CARD:
+-                txt_creditCard.click();
+-                break;
+-            case ConstantVariables.LOAN:
+-                txt_loan.click();
+-                break;
+-            default:
+-                Assert.fail("There is no such " + types + " in this switch statement");
+-        }
+-    }
+-
+ }
+\ No newline at end of file

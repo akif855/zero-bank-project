@@ -1,13 +1,8 @@
-package com.zerobank.step_definitions;
+package com.zerobank.stepdefinitions;
 
-import com.zerobank.pages.AccountSummaryPage;
 import com.zerobank.pages.BasePage;
-import com.zerobank.pages.LoginPage;
-import com.zerobank.utilities.BrowserUtils;
-import com.zerobank.utilities.Driver;
 import com.zerobank.utilities.PageObjects;
 import io.cucumber.java.en.Then;
-import org.junit.Assert;
 
 import java.util.List;
 
