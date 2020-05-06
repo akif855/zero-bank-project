@@ -21,7 +21,7 @@ Feature: Login functionality
     Examples:
       | username      | password      |
       | Akif          | user_password |
-      | user_username | Aihuseyn      |
+      | user_username | Alihuseyn      |
       |               | user_password |
       | user_username |               |
       |               |               |
